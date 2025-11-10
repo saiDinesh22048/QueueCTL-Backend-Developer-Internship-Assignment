@@ -1,14 +1,14 @@
 # QueueCTL
 
-CLI job queue system for backend assignment. Node.js + SQLite for jobs, workers, retries, DLQ, and persistence.
+i implemented CLI job queue system for backend assignment. i have used Node.js + SQLite for jobs, workers, retries, DLQ, and persistence.
 
 ## Setup Instructions
 
-1. `npm install` (Node v18+).
+1. `npm install` .
 2. `node queuectl.js --help`.
-3. `queue.db` auto-creates.
+3. `queue.db` creates automaticaly.
 
-Windows PS: `node queuectl.js enqueue "{\"id\":\"job1\",\"command\":\"echo hi\"}"`.
+Windows PowerShell: `node queuectl.js enqueue "{\"id\":\"job1\",\"command\":\"echo hi\"}"`.(use this format for jason as the shell supports only this format)
 
 For logs: `node worker.js` direct.
 
@@ -101,19 +101,19 @@ These are all the commands available.
 
 During development and testing (mostly on Windows PowerShell), I hit a few key issues. Here's what I encountered and how I fixed them:
 
-1. **JSON Quoting in PowerShell**: Enqueuing failed with parse errors—PowerShell parsed `{...}` as hashtables or expanded `!` in strings.  
+a. **JSON Quoting in PowerShell**: Enqueuing failed with parse errors—PowerShell parsed `{...}` as hashtables or expanded `!` in strings.  
    *Fix*: Used escaped double quotes (`\"{...}\"`) for JSON args; tested in CMD for cross-terminal stability.
 
-2. **Silent Worker Logs**: Spawned workers (`worker start`) didn't output to console on Windows due to stdio buffering.  
+b. **Silent Worker Logs**: Spawned workers (`worker start`) didn't output to console on Windows due to stdio buffering.  
    *Fix*: Added verbose PID/timestamp prints in `worker.js`; recommended direct `node worker.js` for debugging.
 
-3. **Retry Logic Skipping Failed Jobs**: Workers only polled `pending` state, ignoring `failed` jobs for backoff retries.  
+c. **Retry Logic Skipping Failed Jobs**: Workers only polled `pending` state, ignoring `failed` jobs for backoff retries.  
    *Fix*: Updated `acquireJob` query in `db.js` to `(state = 'pending' OR state = 'failed') AND next_attempt_at <= now`.
 
-4. **DB Locking Timeouts**: Multiple workers caused transaction deadlocks in SQLite.  
+d. **DB Locking Timeouts**: Multiple workers caused transaction deadlocks in SQLite.  
    *Fix*: Enabled WAL mode and 5s busy_timeout in DB init for better concurrency.
 
-5. **Infinite Shutdown Loop on Ctrl+C**: SIGINT handler looped endlessly in shutdown mode.  
+e. **Infinite Shutdown Loop on Ctrl+C**: SIGINT handler looped endlessly in shutdown mode.  
    *Fix*: Added 10s timeout with elapsed logging in `worker.js` to force exit.
 
 
